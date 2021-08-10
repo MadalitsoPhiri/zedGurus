@@ -4,6 +4,9 @@ import {
     Text,
     TouchableOpacity,
     View,
+    Image,
+    StatusBar,
+    Dimensions
   } from 'react-native';
  
  
@@ -13,12 +16,21 @@ import {useSelector,useDispatch} from "react-redux"
 import { RandomUser } from '../types/RandomUserType';
 import {fetchUsers} from "../redux/slices/randomUsersSlice"
 import uuid from 'react-native-uuid';
+import UserListItem from './UserListItem';
+import * as Progress from 'react-native-progress';
+import { NavigationProp } from '@react-navigation/native';
 
 
 
 
+const {width,height} = Dimensions.get("window")
 const seed = uuid.v4().toString(); 
-const UserList:FC = ()=>{
+const SPACING = 20
+const loaderSize = 40
+interface UserListProps{
+  navigation:any,
+}
+const UserList = ({ navigation}:UserListProps)=>{
     const dispatch = useDispatch()
     const [onEndReachedCalledDuringMomentum,setOnEndReachedCalledDuringMomentum] = React.useState(true)
     useEffect(()=>{
@@ -42,47 +54,58 @@ const UserList:FC = ()=>{
         alignItems:"center",
         height:"100%" 
        },
+       UserListRoot:{
+         flex:1,
+         width:"100%",
+         height:"100%"
+       },
        headingBackground:{
          backgroundColor:"red",
          borderRadius:20,
-         padding:15
+         paddingVertical:15
        },
-       userlist:{
-         flex:1,
-         width:"100%",
-         height:"100%",
-         padding:"5%"
-       }
+       userContainerListStyle:{
+        padding:SPACING,
+        paddingTop:42
+       },
+      UsersFlalist:{
+
+        width:"100%",
+        height:"100%"
+      }
     })
-    return( <>
-    {!usersState.loading && usersState.users.length != 0  && <View style={styles.container}> 
+    return( <View style={styles.UserListRoot}>
+     <Image source={require('../assets/background.png')}  style={[StyleSheet.absoluteFill,{width:"100%",height:"100%"}]} blurRadius={60}/> 
+    {usersState.users.length != 0 ? <View style={styles.container}>
+   
     <FlatList
-    style={styles.userlist}
+    style = {styles.UsersFlalist}
+    contentContainerStyle={styles.userContainerListStyle}
     data={usersState.users}
     keyExtractor={(_,index)=>{
       return index.toString()
     }}
     renderItem={({item,index})=>{
-      return <><Text>{item.name.first}</Text>
-      <Text>{item.email}</Text></>
+      return <UserListItem item={item} nav={navigation}/>
     }}
     onEndReached={handleOnBottomReached}
     onEndReachedThreshold={0.1}
     onMomentumScrollBegin={() => { setOnEndReachedCalledDuringMomentum(false) }}
     />
      
-    </View>}
-
-    {usersState.loading &&<View style={{alignItems:"center",justifyContent:"center"}}> 
-    <Text>Loading</Text>
-     
-    </View>}
-    {usersState.error && <View style={styles.container}> 
+    </View>:usersState.error && !usersState.loading ? <View style={[styles.UserListRoot,{alignItems:"center",justifyContent:"center"}]}> 
     <Text>Error</Text>
      
-    </View>}
+    </View>:<View style={[styles.UserListRoot,{alignItems:"center",justifyContent:"center"}]}> 
+    <Progress.Circle size={loaderSize} indeterminate={true} color="red" thickness={10}/></View>}
+
+    
+    {usersState.loading && usersState.users.length != 0 ? <View style={{alignItems:"center",width:"100%",padding:15}}> 
+    <Progress.Circle size={30} indeterminate={true} color="red" />
+  
+    </View>:null}
    
-    </>)
+    </View>)
  
   }
 
